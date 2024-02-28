@@ -1,6 +1,20 @@
+import os
 from transformers import AutoTokenizer, pipeline
 import torch
+import json
+from logging import config, getLogger
 
+# 現在のスクリプトファイルの絶対パスを取得する
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# 設定ファイルのパスを作成する
+settings_file_path = os.path.join(script_dir, "logsettings.json")
+
+logger = getLogger(__name__)
+
+# ログ設定読込
+with open(settings_file_path) as f:
+    config.dictConfig(json.load(f))
 
 def setup_pipeline(model,device):
     torch_dtype = torch.bfloat16
@@ -15,7 +29,7 @@ def setup_pipeline(model,device):
     )
 
 def main():
-    # model = "gg-hf/gemma-7b-it"
+    # model = "google/gemma-7b-it"
     model = "google/gemma-2b-it"
     device = "cuda"
 
@@ -23,11 +37,12 @@ def main():
 
     chat = []
     while(True):
-        print("------------------------")
         input_text = input("input: ")
 
         if(input_text == "quit"):
             break
+
+        logger.info(f"input: {input_text}")
 
         # Add user input to chat history
         chat.append({"role":"user","content":input_text})
@@ -42,53 +57,9 @@ def main():
                                 top_k=5,
                                 top_p=0.95)
         output_text = outputs[0]["generated_text"][len(prompt):]
-        print(f"gemma: {output_text}")
+        logger.info(f"gemma: {output_text}")
 
         chat.append({"role":"model","content":output_text})
 
 if __name__ == "__main__":
     main()
-
-
-# dtype = torch.bfloat16
-
-# tokenizer = AutoTokenizer.from_pretrained(model_id)
-
-# # Requires 'pip install accelerate' for the following line
-# model = AutoModelForCausalLM.from_pretrained(
-#     model_id,
-#     device_map="cuda",
-#     torch_dtype=dtype,
-# )
-
-
-
-# while(True):
-#     chat = []
-
-#     input_text = input("input: ")
-
-#     if(input_text == "quit"):
-#         break
-
-#     # Add user input to chat history
-#     chat.append({"role":"user","content":input_text})
-
-#     # chat = [
-#     #     { "role":"user","content":"Please explain what WSL is and how it works."},
-#     # ]
-
-#     prompt = tokenizer.apply_chat_template(chat,tokenize=False,add_generation_prompt=True,return_tensors="pt")
-
-#     inputs = tokenizer.encode(prompt, add_special_tokens=False,return_tensors="pt")
-#     outputs = model.generate(input_ids=inputs.to(model.device),max_new_tokens=150)
-
-#     output = tokenizer.decode(outputs[0, len(prompt):])
-#     print(f"gemma: {output}")
-#     chat.append({"role":"model","content":output})
-
-#     # Add model output to chat history
-#     #chat.append({"role":"model","content":output})
-
-
-
