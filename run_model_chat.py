@@ -19,7 +19,9 @@ with open(settings_file_path) as f:
 def setup_pipeline(model,device):
     torch_dtype = torch.bfloat16
 
-    tokenizer = AutoTokenizer.from_pretrained(model)
+    tokenizer = AutoTokenizer.from_pretrained(model,
+                                              attn_implementation="flash_attention_2",
+                                              )
     return pipeline(
         "text-generation",
         model=model,
